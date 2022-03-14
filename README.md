@@ -5,7 +5,7 @@ This is a simple BLOG API.
 ## Getting Started
 
 First, run the development server:
-
+## CREATE A .env file (check .env-copy for reference)
 ```bash
 npm install
 npm start
