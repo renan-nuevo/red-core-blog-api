@@ -49,7 +49,6 @@ router.delete("/:id", async (req, res) => {
         if (post.author_id === req.body.author_id) {
             try {
                 await post.delete()
-                console.log('deleted')
                 res.status(200).json({success: true, message: "Post has been deleted successfully."})
             }
             catch (err) {
@@ -80,22 +79,46 @@ router.get("/:id", async (req, res) => {
 router.get("/", async (req, res) => {
     const username = req.query.user
     const catName = req.query.cat
+    const search = req.query.search
+    const query = Post.aggregate();
     try {
         let posts
+        if(search) {
+            const texts = search.split(' ');
+            let regex = '^(?=.*';
+            regex += texts.join(')(?=.*');
+            regex += ').*$';
+
+            query.match({
+                $or: [
+                    {
+                        title: {
+                            $regex: new RegExp(regex, 'i'),
+                        },
+                    },
+                    {
+                        desc: {
+                            $regex: new RegExp(regex, 'i'),
+                        },
+                    },
+                ],
+            });
+            posts = await query.exec()
+        }
+        
         if (username) {
             const user = await User.findOne({username})
             posts = await Post.find({ author_id: user._id })
         }
+        
         else if (catName) {
             posts = await Post.find({
                 categories: {
-                $in: [catName],
+                    $in: [catName],
                 },
             })
         }
-        else {
-            posts = await Post.find()
-        }
+        
         res.status(200).json(posts)
     }
     catch (err) {
